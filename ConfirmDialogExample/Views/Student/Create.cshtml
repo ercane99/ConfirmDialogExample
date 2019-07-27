@@ -1,0 +1,98 @@
+﻿@model ConfirmDialogExample.Models.Student
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Student</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <!--FORM (method="post" is important to provide antiforgery token in display form)-->
+        <form method="post">
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <!--Hidden id. Assumption: Id is given by the remote system, so we assign it in controller during the create.-->
+            <input asp-for="Id" class="form-control" hidden />
+
+            <div class="form-group">
+                <label asp-for="Firstname" class="control-label"></label>
+                <input asp-for="Firstname" class="form-control" />
+                <span asp-validation-for="Firstname" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Lastname" class="control-label"></label>
+                <input asp-for="Lastname" class="form-control" />
+                <span asp-validation-for="Lastname" class="text-danger"></span>
+            </div>
+            <!--Button to create student-->
+            <div class="form-group">
+                <input id="btnCreate" type="button" value="Create" class="btn btn-primary" onclick="btnCreateClicked(this)" />
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script src="~/lib/bootbox.js/bootbox.js"></script>
+    <script src="~/js/ajaxDialog.js"></script>
+    <script>
+        // Function to display confirm dialog to users
+        // Calls function which will request Ajax call if user confirms.
+        // This ajax caller will be defined in external js file in next step
+        function btnCreateClicked(btn) {
+            //Check if form is valid
+            $('form').validate();
+            if ($('form').valid() !== true) {
+                return;
+            }
+            //Ask for confirmation
+            bootbox.confirm({
+                message: 'Do you really want to create this student ?',//confirmation question
+                buttons: {
+                    confirm: {
+                        label: 'Yes',
+                        className: 'btn-success'
+                    },
+                    cancel: {
+                        label: 'No',
+                        className: 'btn-danger'
+                    }
+                },
+                callback: function (result) {//Process user answer to confirmation question
+                    if (result) {//User clicked YES
+                        //Disable button
+                        $(btn).attr("disabled", true);
+                        //Prepare form data to be sent
+                        var sendData = {
+                            Id: $('#Id').val(),
+                            Firstname: $('#Firstname').val(),
+                            Lastname: $('#Lastname').val()
+                        };
+                        //Action to be called to perform operation
+                        var urlToCreateStudent = "/Student/Create";//url to the create action in controller
+                        //Verification token
+                        var requestVerificationToken = $('input[type=hidden][name=__RequestVerificationToken]', document).val();
+                        //Call the function to send ajax call with data and confirm dialogs
+                        postAjaxAndDisplayResultDialog(btn, sendData, urlToCreateStudent, requestVerificationToken);
+                    }
+                    else {//User clicked NO
+                        //Enable button
+                        $(btn).attr("disabled", false);
+                    }
+                }
+            });
+        }
+    </script>
+
+
+}
